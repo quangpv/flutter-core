@@ -1,4 +1,6 @@
-class User extends Object {
+import 'package:flutter_app/core/Serializable.dart';
+
+class User implements Serializable {
   int id = 0;
   String email = "";
   String name = "";
@@ -13,7 +15,8 @@ class User extends Object {
         phone: json["phone"],
       );
 
-  toMap() => <String, dynamic>{
+  @override
+  Map<String, dynamic> toMap() => {
         "id": id,
         "email": email,
         "name": name,

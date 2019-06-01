@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/AppCache.dart';
+import 'package:flutter_app/app/AppStateModel.dart';
 import 'package:flutter_app/core/BaseState.dart';
 import 'package:flutter_app/core/DependenceContext.dart';
 import 'package:flutter_app/models/User.dart';
@@ -32,7 +33,7 @@ class _UserProfileState
       );
 }
 
-class UserProfileStateModel extends StateModel {
+class UserProfileStateModel extends AppStateModel {
   User user = User();
 
   AppCache get appCache => inject();

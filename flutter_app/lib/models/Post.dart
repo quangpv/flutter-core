@@ -10,6 +10,7 @@ class Post implements Serializable {
 
   static fromList(List json) {
     List<Post> posts = List();
+    if(json==null) return posts;
     json.forEach((js) => posts.add(from(js)));
     return posts;
   }

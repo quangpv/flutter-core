@@ -17,9 +17,7 @@ class TemporaryData<T> {
       newResult = await call;
     else
       newResult = call;
-
-    _data[key] = newResult;
-    _timeLoaded[key] = DateTime.now().millisecondsSinceEpoch;
+    put(key, newResult);
     return newResult;
   }
 
@@ -34,5 +32,10 @@ class TemporaryData<T> {
     var current = DateTime.now().millisecondsSinceEpoch;
     var timeLoaded = _timeLoaded[key];
     return timeLoaded > (current + timeout);
+  }
+
+  void put(Object key, T data) {
+    _data[key] = data;
+    _timeLoaded[key] = DateTime.now().millisecondsSinceEpoch;
   }
 }

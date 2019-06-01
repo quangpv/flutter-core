@@ -6,7 +6,6 @@ import 'package:flutter_app/core/Resources.dart';
 
 import 'DependenceContext.dart';
 import 'Lifecycle.dart';
-import 'Throwable.dart';
 
 abstract class StateWidget<T extends StatefulWidget, V extends StateModel>
     extends State<T> {
@@ -124,12 +123,9 @@ class StateModel {
   }
 
   void _handleError(error) {
-    if (error is Error) {
-      this._error = error;
-      if (!(error is Throwable)) print(error.stackTrace);
-    } else
-      this._error = Throwable(message: error.toString());
-    onError(this._error);
+    print(error.toString());
+    if (error is Error) print(error.stackTrace);
+    _error = convertError(error);
   }
 
   void _onStartLaunch() {
@@ -160,7 +156,7 @@ class StateModel {
 
   void onInitState() {}
 
-  void onError(Error error) {}
+  Error convertError(error) => error;
 
   bool shouldShowLoading() => true;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/pages/HomePage.dart';
 import 'package:flutter_app/pages/LoginPage.dart';
+import 'package:flutter_app/pages/SplashPage.dart';
 import 'package:flutter_app/pages/fragments/HomeFragment.dart';
 import 'package:flutter_app/pages/fragments/UserProfileFragment.dart';
 import 'package:flutter_app/repositories/PostRepository.dart';
@@ -10,10 +11,9 @@ import 'package:flutter_app/resources/AppTheme.dart';
 
 import 'app/ApiClient.dart';
 import 'app/AppCache.dart';
+import 'app/AppDatabase.dart';
 import 'core/DependenceContext.dart';
-import 'core/LiteDatabase.dart';
 import 'core/Resources.dart';
-import 'models/Post.dart';
 
 void main() {
   runApp(MyApp());
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: resources.getString(RS.title),
       theme: AppTheme.defaultTheme,
-      home: LoginPage(),
+      home: SplashPage(),
       routes: {
         RR.login: (context) => LoginPage(),
         RR.main: (context) => HomePage(),
@@ -41,19 +41,14 @@ class MyApp extends StatelessWidget {
     state(() => HomeStateModel());
     state(() => HomeDetailStateModel());
     state(() => UserProfileStateModel());
+    state(() => SplashStateModel());
 
     single<Resources>(() => AppResources());
     single(() => UserRepository(inject(), inject()));
-    single(() => PostRepository(inject(), inject()));
+    single(() => PostRepository(inject(), inject(), inject()));
 
     single(() => AppCache());
     single(() => ApiClient(inject()));
-    single(() => LiteDatabase(
-          name: 'app_database',
-          version: 1,
-          models: [
-            Post.entity,
-          ],
-        ));
+    single(() => AppDatabase());
   }
 }

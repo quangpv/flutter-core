@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/AppStateModel.dart';
 import 'package:flutter_app/core/BaseState.dart';
 import 'package:flutter_app/repositories/UserRepository.dart';
 import 'package:flutter_app/resources/AppResources.dart';
@@ -16,7 +17,6 @@ class _LoginPageState extends StateWidget<LoginPage, LoginStateModel> {
   void initState() {
     _emailController.text = stateModel.email;
     _passwordController.text = stateModel.password;
-    resources.editConfig().setLanguage(SupportLanguage.VN).apply();
     super.initState();
   }
 
@@ -83,7 +83,7 @@ class _LoginPageState extends StateWidget<LoginPage, LoginStateModel> {
       );
 }
 
-class LoginStateModel extends StateModel {
+class LoginStateModel extends AppStateModel {
   UserRepository userRepo;
   String email = "Sincere@april.biz";
   String password = "";

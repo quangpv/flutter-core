@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/AppStateModel.dart';
 import 'package:flutter_app/core/BaseState.dart';
 import 'package:flutter_app/core/DependenceContext.dart';
 import 'package:flutter_app/models/Post.dart';
@@ -58,7 +59,7 @@ class _HomeDetailState extends StateWidget<HomeFragment, HomeDetailStateModel> {
       );
 }
 
-class HomeDetailStateModel extends StateModel {
+class HomeDetailStateModel extends AppStateModel {
   List<Post> posts = List();
 
   PostRepository get postRepo => inject();

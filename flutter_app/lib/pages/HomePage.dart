@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/AppStateModel.dart';
 import 'package:flutter_app/core/BaseState.dart';
 import 'package:flutter_app/resources/AppResources.dart';
 
@@ -70,7 +71,7 @@ class _HomeState extends StateWidget<HomePage, HomeStateModel>
       );
 }
 
-class HomeStateModel extends StateModel {
+class HomeStateModel extends AppStateModel {
   @protected
   var _scene = 0;
 

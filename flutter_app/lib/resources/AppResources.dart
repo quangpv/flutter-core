@@ -37,6 +37,8 @@ class RS {
   static const tab_default = 12;
 
   static const title_default = 13;
+
+  static const error_no_internet_connection = 14;
 }
 
 final defaultText = {
@@ -54,6 +56,7 @@ final defaultText = {
   RS.tab_user: "User",
   RS.tab_default: "Default",
   RS.title_default: "This is default fragment",
+  RS.error_no_internet_connection: "No internet connection",
 };
 
 final vnText = {
@@ -71,6 +74,7 @@ final vnText = {
   RS.tab_user: "Người dùng",
   RS.tab_default: "Mặc định",
   RS.title_default: "Màn hình mặc định",
+  RS.error_no_internet_connection: "Mất kết nối internet",
 };
 
 /// [RD] Dimension ID

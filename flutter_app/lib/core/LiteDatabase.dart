@@ -6,17 +6,22 @@ import 'package:sqflite/sqflite.dart';
 import 'Serializable.dart';
 
 class LiteDatabase {
-  String name;
-  int version;
+  final String name;
+  final int version;
   Database _database;
 
-  List<ModelTable> models;
+  final List<ModelTable> models;
+
+  Map<Type, ModelTable> _modelMap;
 
   LiteDatabase({
     this.name = "flutter",
     this.version = 1,
     @required this.models,
-  });
+  }) {
+    _modelMap =
+        models.asMap().map((index, value) => MapEntry(value.table, value));
+  }
 
   String get _dbPath => "$name.db";
 
@@ -28,6 +33,9 @@ class LiteDatabase {
     );
   }
 
+  Future _onCreateDatabase(Database db, int version) async =>
+      models.forEach((model) async => await db.execute(model.toString()));
+
   Future _start(Future Function() function) async {
     await _open();
     var result = await function();
@@ -35,49 +43,25 @@ class LiteDatabase {
     return result;
   }
 
-  Future _onCreateDatabase(Database db, int version) async {
-    for (ModelTable value in models) {
-      await _onCreateTable(value);
-    }
-  }
-
-  Future _onCreateTable(ModelTable value) async {
-    var tableContent = _onCreateColumn(value);
-    var create = "CREATE TABLE ${value.modelTable} ($tableContent)";
-    await _database.execute(create);
-  }
-
-  List<String> _onCreateColumn(ModelTable value) {
-    var fields = List<String>();
-    value.fields.forEach((key, field) => fields.add("$key "
-            "${field.modelType} "
-            "${field.modelKey} "
-            "${field.modelAutoincrement} "
-            "${field.modelNotNull}"
-        .trim()));
-    return fields;
-  }
-
   _close() async => _database.close();
 
-  Future<T> get<T>(String sql, [List<dynamic> arguments]) => _start(() async {
+  Future get<T>(String sql, [List<dynamic> arguments]) => _start(() async {
         var data = await _database.rawQuery(sql, arguments);
         if (data.length == 0) return null;
-        if (T is List) return data as T;
-        return data[0] as T;
+        if (T == List) return data;
+        return data[0];
       });
 
   Future insert<T>(T model) async {
     return _start(() async {
       if (model is List) {
         _batch(model, (batch, item) async {
-          batch.insert(T.toString(), (item as Serializable).toMap());
+          batch.insert(
+              item.runtimeType.toString(), (item as Serializable).toMap());
         });
         return;
       }
-
-      if (!(model is Serializable))
-        throw Exception("Model should be instance of Serializable");
+      requireSerializable(model);
       await _database.insert(T.toString(), (model as Serializable).toMap());
     });
   }
@@ -89,15 +73,14 @@ class LiteDatabase {
     return _start(() async {
       if (model is List) {
         _batch(model, (b, item) {
-          b.update(T.toString(), (item as Serializable).toMap(),
+          b.update(item.runtimeType.toString(), (item as Serializable).toMap(),
               where: where,
               whereArgs: whereArgs,
               conflictAlgorithm: conflictAlgorithm);
         });
         return;
       }
-      if (!(model is Serializable))
-        throw Exception("Model should be instance of Serializable");
+      requireSerializable(model);
       await _database.update(T.toString(), (model as Serializable).toMap(),
           where: where,
           whereArgs: whereArgs,
@@ -105,26 +88,34 @@ class LiteDatabase {
     });
   }
 
-  Future<int> delete<T>(T model) async {
+  Future delete<T>(T model) async {
     var data = (model as Serializable).toMap();
+    String idColumn = _findIdColumn(model);
     var where = "";
     var whereArgs = List();
-    data.forEach((key, value) {
-      var clause = "$key = ?";
-      if (where == "")
-        where = clause;
-      else
-        where = "$where and $clause";
-    });
+
+    if (idColumn != null) {
+      where = "$idColumn = ?";
+      whereArgs.add(data[idColumn]);
+    } else {
+      data.forEach((key, value) {
+        var clause = "$key = ?";
+        if (where == "")
+          where = clause;
+        else
+          where = "$where and $clause";
+        whereArgs.add(value);
+      });
+    }
     return _start(() async {
       if (model is List) {
         _batch(model, (b, item) {
-          b.delete(T.toString(), where: where, whereArgs: whereArgs);
+          b.delete(item.runtimeType.toString(),
+              where: where, whereArgs: whereArgs);
         });
         return;
       }
-      if (!(model is Serializable))
-        throw Exception("Model should be instance of Serializable");
+      requireSerializable(model);
       await _database.delete(T.toString(), where: where, whereArgs: whereArgs);
     });
   }
@@ -132,11 +123,24 @@ class LiteDatabase {
   void _batch(List items, Future Function(Batch, dynamic) function) {
     var batch = _database.batch();
     items.forEach((item) {
-      if (!(item is Serializable))
-        throw Exception("Model should be instance of Serializable");
+      requireSerializable(item);
       function(batch, item);
     });
     batch.commit();
+  }
+
+  String _findIdColumn<T>(T model) {
+    var columns = _modelMap[T].columns;
+    for (var key in columns.keys) {
+      var column = columns[key];
+      if (column.isKey) return key;
+    }
+    return null;
+  }
+
+  void requireSerializable(item) {
+    if (!(item is Serializable))
+      throw Exception("Model should be instance of Serializable");
   }
 }
 
@@ -146,7 +150,7 @@ class ModelColumn {
   bool isNotNull;
   bool isAutoincrement;
 
-  String get modelType {
+  String get _modelType {
     switch (type) {
       case bool:
         return "int";
@@ -157,20 +161,45 @@ class ModelColumn {
     }
   }
 
-  String get modelKey => isKey ? "primary key" : "";
+  String get _modelKey => isKey ? "primary key" : "";
 
-  String get modelAutoincrement => isAutoincrement ? "autoincrement" : "";
+  String get _modelAutoincrement => isAutoincrement ? "autoincrement" : "";
 
-  String get modelNotNull => isNotNull ? "not null" : "";
+  String get _modelNotNull => isNotNull ? "not null" : "";
 
-  ModelColumn(this.type, {this.isKey, this.isNotNull, this.isAutoincrement});
+  ModelColumn(this.type,
+      {this.isKey = false,
+      this.isNotNull = false,
+      this.isAutoincrement = false});
+
+  @override
+  String toString() =>
+      "$_modelType $_modelKey $_modelAutoincrement $_modelNotNull";
 }
 
 class ModelTable {
   Type table;
-  Map<String, ModelColumn> fields;
+  Map<String, ModelColumn> columns;
 
-  String get modelTable => table.toString();
+  ModelTable(this.table, this.columns);
 
-  ModelTable(this.table, this.fields);
+  List<String> _getColumns() {
+    var fields = List<String>();
+    columns.forEach(
+        (name, field) => fields.add("$name ${field.toString()}".trim()));
+    return fields;
+  }
+
+  @override
+  String toString() {
+    var tableContent = _getColumns().reduce((value, item) => "$value, $item");
+    return "CREATE TABLE ${table.toString()} ($tableContent)";
+  }
+}
+
+abstract class LiteDao {
+  @protected
+  final LiteDatabase database;
+
+  LiteDao(this.database);
 }
