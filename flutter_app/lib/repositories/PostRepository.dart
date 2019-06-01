@@ -1,5 +1,7 @@
 import 'package:flutter_app/app/ApiClient.dart';
 import 'package:flutter_app/app/AppCache.dart';
+import 'package:flutter_app/core/DependenceContext.dart';
+import 'package:flutter_app/core/LiteDatabase.dart';
 import 'package:flutter_app/core/TemporaryData.dart';
 import 'package:flutter_app/models/Post.dart';
 import 'package:flutter_app/resources/AppResources.dart';
@@ -10,6 +12,8 @@ class PostRepository {
   final AppCache _appCache;
   final ApiClient _apiClient;
   var _posts = TemporaryData<List<Post>>(timeout: MAX_TIMEOUT);
+
+  LiteDatabase get _database => inject();
 
   PostRepository(this._appCache, this._apiClient);
 

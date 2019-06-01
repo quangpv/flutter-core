@@ -1,4 +1,7 @@
-class Post {
+import 'package:flutter_app/core/LiteDatabase.dart';
+import 'package:flutter_app/core/Serializable.dart';
+
+class Post implements Serializable {
   String title;
 
   String body;
@@ -15,4 +18,15 @@ class Post {
         title: js["title"],
         body: js["body"],
       );
+
+  @override
+  Map<String, dynamic> toMap() => {
+        "title": title,
+        "body": body,
+      };
+
+  static ModelTable entity = ModelTable(Post, {
+    "title": ModelColumn(String),
+    "body": ModelColumn(String),
+  });
 }
