@@ -10,8 +10,9 @@ class AppCache {
 
   Future<User> getUser() async {
     if (_user != null) return _user;
-    var userJson = json.decode((await _preferences).getString("user"));
-    _user = User.from(userJson);
+    var userStr = (await _preferences).getString("user");
+    if (userStr == null || userStr == "") return User();
+    _user = User.from(json.decode(userStr));
     return _user;
   }
 

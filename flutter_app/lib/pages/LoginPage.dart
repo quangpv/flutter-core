@@ -4,7 +4,6 @@ import 'package:flutter_app/repositories/UserRepository.dart';
 import 'package:flutter_app/resources/AppResources.dart';
 
 class LoginPage extends StatefulWidget {
-
   @override
   State createState() => _LoginPageState();
 }

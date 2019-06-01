@@ -40,11 +40,7 @@ abstract class Resources {
     return _dimenMap[id];
   }
 
-  ResourceConfig editConfig() {
-    var newConfig = ResourceConfig();
-    newConfig._resources = this;
-    return newConfig;
-  }
+  ResourceConfig editConfig() => _config.clone();
 
   void addChangedListener(OnConfigChangedListener listener) {
     _listeners.add(listener);
@@ -103,5 +99,13 @@ class ResourceConfig {
 
   void apply() {
     _resources._onConfigChanged(this);
+  }
+
+  ResourceConfig clone() {
+    var clone = ResourceConfig();
+    clone._language = _language;
+    clone._dimenStyle = _dimenStyle;
+    clone._resources = _resources;
+    return clone;
   }
 }

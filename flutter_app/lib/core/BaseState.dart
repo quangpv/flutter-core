@@ -124,9 +124,10 @@ class StateModel {
   }
 
   void _handleError(error) {
-    if (error is Error)
+    if (error is Error) {
       this._error = error;
-    else
+      if (!(error is Throwable)) print(error.stackTrace);
+    } else
       this._error = Throwable(message: error.toString());
     onError(this._error);
   }
