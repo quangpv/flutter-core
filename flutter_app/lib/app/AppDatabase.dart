@@ -1,22 +1,23 @@
+import 'package:flutter_app/core/Lazy.dart';
 import 'package:flutter_app/core/LiteDatabase.dart';
 import 'package:flutter_app/models/Post.dart';
 
-class AppDatabase extends LiteDatabase {
-  PostDao _post;
+class AppDatabase {
+  LiteDatabase _db;
+  Lazy<PostDao> _post;
 
-  AppDatabase()
-      : super(
-          name: "app_database",
-          models: [
-            Post.entity,
-          ],
-          version: 2,
-        );
-
-  PostDao postDao() {
-    if (_post == null) _post = PostDao(this);
-    return _post;
+  AppDatabase() {
+    this._db = LiteDatabase(
+      name: "app_database",
+      models: [
+        Post.entity,
+      ],
+      version: 2,
+    );
+    this._post = Lazy.of(() => PostDao(_db));
   }
+
+  PostDao postDao() => _post.get();
 }
 
 class PostDao extends LiteDao {

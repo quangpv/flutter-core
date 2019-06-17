@@ -1,10 +1,16 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'Throwable.dart';
 
 abstract class Resources {
   static const DEFAULT = "resources:default";
+  static const CONFIG = "resources:config";
   final ResourceConfig _config = ResourceConfig();
+  Future<SharedPreferences> _preferences = SharedPreferences.getInstance();
+
   Map<int, String> _textMap;
   Map<int, String> _defaultTextMap;
 
@@ -20,8 +26,12 @@ abstract class Resources {
     _defaultTextMap = getTextConfig(DEFAULT);
     _defaultDimenMap = getDimenConfig(DEFAULT);
 
-    _textMap = getTextConfig(_config._language);
-    _dimenMap = getDimenConfig(_config._dimenStyle);
+    _loadConfig().then((newConfig) => _updateConfigIfNeeded(newConfig));
+  }
+
+  Future<ResourceConfig> _loadConfig() async {
+    var configString = (await _preferences).getString(CONFIG);
+    return ResourceConfig.from(configString);
   }
 
   String getString(int id) {
@@ -54,7 +64,13 @@ abstract class Resources {
     _listeners.forEach((item) => item._function());
   }
 
-  void _onConfigChanged(ResourceConfig newConfig) {
+  Future _onConfigChanged(ResourceConfig newConfig) async {
+    if (_updateConfigIfNeeded(newConfig)) {
+      (await _preferences).setString(CONFIG, newConfig.toString());
+    }
+  }
+
+  bool _updateConfigIfNeeded(ResourceConfig newConfig) {
     var isChanged = false;
 
     if (_config._language.toUpperCase() != newConfig._language.toUpperCase()) {
@@ -70,6 +86,7 @@ abstract class Resources {
       isChanged = true;
     }
     if (isChanged) notifyChanged();
+    return isChanged;
   }
 
   @protected
@@ -97,8 +114,13 @@ class ResourceConfig {
     return this;
   }
 
+  ResourceConfig setDimenStyle(String dimenStyle) {
+    _dimenStyle = dimenStyle;
+    return this;
+  }
+
   void apply() {
-    _resources._onConfigChanged(this);
+    _resources._onConfigChanged(this).whenComplete(() {});
   }
 
   ResourceConfig clone() {
@@ -107,5 +129,16 @@ class ResourceConfig {
     clone._dimenStyle = _dimenStyle;
     clone._resources = _resources;
     return clone;
+  }
+
+  @override
+  String toString() =>
+      json.encode({"language": _language, "dimenStyle": _dimenStyle});
+
+  static ResourceConfig from(String configString) {
+    var map = json.decode(configString);
+    return ResourceConfig()
+        .setLanguage(map["language"])
+        .setDimenStyle(map["dimenStyle"]);
   }
 }
